@@ -9,7 +9,7 @@
  * 
  * @example
  * // In your LangGraph workflow
- * import { EmailAgent, createEmailNode } from '@/lib/agents/email-agent';
+ * import { EmailAgent, createEmailNode } from '@/app/api/agents/email/tools';
  * 
  * const emailAgent = new EmailAgent();
  * const emailNode = createEmailNode(emailAgent);

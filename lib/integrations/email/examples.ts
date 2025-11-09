@@ -258,7 +258,7 @@ export async function exampleTestConfiguration() {
  */
 export async function exampleLangGraphIntegration() {
   // This would be used in your LangGraph workflow
-  const { EmailAgent, createEmailNode } = await import('@/lib/agents/email-agent');
+  const { EmailAgent, createEmailNode } = await import('@/app/api/agents/email/tools');
 
   const agent = new EmailAgent({
     enableLogging: true,
