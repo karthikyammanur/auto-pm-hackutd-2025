@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import {
   BarChart,
   Bar,
@@ -39,7 +40,12 @@ export default function OrchestratorPage() {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<ComprehensiveAnalysis | null>(null);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'feedback' | 'okr' | 'news' | 'competitors' | 'json'>('overview');
+  const [activeTab, setActiveTab] = useState<'summary' | 'overview' | 'feedback' | 'okr' | 'news' | 'competitors' | 'json'>('overview');
+  
+  // Q&A chat state
+  const [chatHistory, setChatHistory] = useState<{question: string, answer: string}[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState('');
+  const [isAnswering, setIsAnswering] = useState(false);
 
   const analyzePrompt = async () => {
     if (!prompt.trim()) {
@@ -94,6 +100,56 @@ export default function OrchestratorPage() {
     link.click();
     URL.revokeObjectURL(url);
   };
+
+  const askQuestion = async () => {
+    if (!currentQuestion.trim() || !analysis) return;
+
+    setIsAnswering(true);
+    const question = currentQuestion;
+    setCurrentQuestion('');
+
+    try {
+      const response = await fetch('/api/agents/orchestrator/qa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question,
+          analysisData: analysis,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setChatHistory([...chatHistory, {
+          question,
+          answer: result.answer,
+        }]);
+      } else {
+        setChatHistory([...chatHistory, {
+          question,
+          answer: `Error: ${result.error || 'Failed to get answer'}`,
+        }]);
+      }
+    } catch (err) {
+      setChatHistory([...chatHistory, {
+        question,
+        answer: `Error: ${err instanceof Error ? err.message : 'An error occurred'}`,
+      }]);
+    } finally {
+      setIsAnswering(false);
+    }
+  };
+
+  const suggestedQuestions = [
+    'What are the most critical customer pain points?',
+    'How do we compare to our competitors?',
+    'Which OKRs align best with this product?',
+    'What are the biggest risks we should be aware of?',
+    'How can I pitch this to stakeholders?',
+  ];
 
   // Colors for charts
   const COLORS = {
@@ -194,6 +250,7 @@ export default function OrchestratorPage() {
             <div className="border-b border-gray-200">
               <nav className="flex overflow-x-auto">
                 {[
+                  { id: 'summary', label: 'Summary', icon: '💡' },
                   { id: 'overview', label: 'Overview', icon: '📊' },
                   { id: 'feedback', label: 'Customer Feedback', icon: '💬' },
                   { id: 'okr', label: 'OKR Alignment', icon: '🎯' },
@@ -219,6 +276,92 @@ export default function OrchestratorPage() {
 
             {/* Tab Content */}
             <div className="p-6">
+              {activeTab === 'summary' && (
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold mb-4">AI Summary Assistant</h2>
+                  <p className="text-gray-600 mb-6">
+                    Ask questions about your analysis data. The AI will use the comprehensive data to provide insights and recommendations.
+                  </p>
+
+                  {/* Chat History */}
+                  <div className="bg-gray-50 rounded-lg p-4 min-h-[400px] max-h-[500px] overflow-y-auto mb-4">
+                    {chatHistory.length === 0 ? (
+                      <div className="text-center text-gray-500 mt-20">
+                        <p className="text-lg mb-4">No questions asked yet. Try one of the suggestions below!</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {chatHistory.map((msg, i) => (
+                          <div key={i} className="space-y-3">
+                            <div className="flex justify-end">
+                              <div className="bg-blue-600 text-white rounded-lg px-4 py-2 max-w-[80%]">
+                                <p className="text-sm">{msg.question}</p>
+                              </div>
+                            </div>
+                            <div className="flex justify-start">
+                              <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 max-w-[80%]">
+                                <div className="text-sm prose prose-sm max-w-none">
+                                  <ReactMarkdown>{msg.answer}</ReactMarkdown>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {isAnswering && (
+                          <div className="flex justify-start">
+                            <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                                <span className="text-sm text-gray-600">Thinking...</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Suggested Questions */}
+                  {chatHistory.length === 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Suggested Questions:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestedQuestions.map((question, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setCurrentQuestion(question)}
+                            disabled={isAnswering}
+                            className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-md transition-colors disabled:opacity-50"
+                          >
+                            {question}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Input Area */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={currentQuestion}
+                      onChange={(e) => setCurrentQuestion(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && !isAnswering && askQuestion()}
+                      placeholder="Ask a question about the analysis..."
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={isAnswering}
+                    />
+                    <button
+                      onClick={askQuestion}
+                      disabled={!currentQuestion.trim() || isAnswering}
+                      className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium transition-colors"
+                    >
+                      {isAnswering ? 'Asking...' : 'Ask'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'overview' && (
                 <div className="space-y-6">
                   <div>
