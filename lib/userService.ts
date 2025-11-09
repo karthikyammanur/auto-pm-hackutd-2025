@@ -169,12 +169,57 @@ class UserService {
     }
   }
 
+  /**
+   * Update user's Google authentication tokens
+   */
+  static async updateGoogleAuth(
+    sub: string,
+    googleAuth: {
+      accessToken: string;
+      refreshToken?: string;
+      tokenExpiry: Date;
+      scopes: string[];
+      email?: string;
+    }
+  ): Promise<IUser | null> {
+    try {
+      await connectDB();
+
+      const user = await User.findOneAndUpdate(
+        { sub },
+        {
+          $set: {
+            googleAuth: {
+              accessToken: googleAuth.accessToken,
+              refreshToken: googleAuth.refreshToken,
+              tokenExpiry: googleAuth.tokenExpiry,
+              scopes: googleAuth.scopes,
+              email: googleAuth.email,
+            },
+          },
+        },
+        { new: true } // Return updated document
+      );
+
+      if (user) {
+        console.log(`✅ Updated Google auth for user: ${user.email}`);
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error updating Google auth:', error);
+      throw error;
+    }
+  }
+
+  
+
   static async getUserWithTokens(sub: string): Promise<IUser | null> {
     try {
       await connectDB();
 
       const user = await User.findOne({ sub })
-        .select('+redditAuth.accessToken +redditAuth.refreshToken +jiraAuth.accessToken +jiraAuth.refreshToken +jiraAuth.apiToken +jiraAuth.personalAccessToken');
+        .select('+redditAuth.accessToken +redditAuth.refreshToken +jiraAuth.accessToken +jiraAuth.refreshToken +jiraAuth.apiToken +jiraAuth.personalAccessToken +googleAuth.accessToken +googleAuth.refreshToken');
 
       return user;
     } catch (error) {

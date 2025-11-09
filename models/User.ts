@@ -17,6 +17,14 @@ interface IJiraAuth {
   cloudId?: string; // Atlassian cloud ID for API requests
 }
 
+interface IGoogleAuth {
+  accessToken?: string;
+  refreshToken?: string;
+  tokenExpiry?: Date;
+  scopes?: string[];
+  email?: string; // Google account email
+}
+
 export interface IUser extends Document {
   username: string;
   firstName: string;
@@ -26,13 +34,14 @@ export interface IUser extends Document {
 
   redditAuth?: IRedditAuth;
   jiraAuth?: IJiraAuth;
-
+  googleAuth?: IGoogleAuth;
   createdAt: Date;
   updatedAt: Date;
 
   // Instance methods
   isRedditTokenExpired(): boolean;
   isJiraTokenExpired(): boolean;
+  isGoogleTokenExpired(): boolean;
 }
 
 const RedditAuthSchema = new Schema<IRedditAuth>({
@@ -70,6 +79,26 @@ const JiraAuthSchema = new Schema<IJiraAuth>({
     type: String,
   }],
   cloudId: {
+    type: String,
+  }
+}, { _id: false });
+
+const GoogleAuthSchema = new Schema<IGoogleAuth>({
+  accessToken: {
+    type: String,
+    select: false, // Don't include by default for security
+  },
+  refreshToken: {
+    type: String,
+    select: false, // Don't include by default for security
+  },
+  tokenExpiry: {
+    type: Date,
+  },
+  scopes: [{
+    type: String,
+  }],
+  email: {
     type: String,
   }
 }, { _id: false });
@@ -119,6 +148,10 @@ const UserSchema = new Schema<IUser>({
     type: JiraAuthSchema,
     default: undefined,
   },
+  googleAuth: {
+    type: GoogleAuthSchema,
+    default: undefined,
+  },
 }, {
   timestamps: true,
   collection: 'users',
@@ -132,6 +165,11 @@ UserSchema.methods = {
   isJiraTokenExpired(): boolean {
     if (!this.jiraAuth?.tokenExpiry) return true;
     return new Date() > this.jiraAuth.tokenExpiry;
+  },
+
+  isGoogleTokenExpired(): boolean {
+    if (!this.googleAuth?.tokenExpiry) return true;
+    return new Date() > this.googleAuth.tokenExpiry;
   },
 };
 
