@@ -9,13 +9,19 @@ interface IRedditAuth {
 }
 
 interface IJiraAuth {
+  // OAuth 2.0 (3LO) - Modern authentication method
+  accessToken?: string;
+  refreshToken?: string;
+  tokenExpiry?: Date;
+  scopes?: string[];
+  cloudId?: string; // Atlassian cloud ID for API requests
+
+  // Legacy fields (for backwards compatibility)
   cloudSite?: string;
   apiToken?: string;
   userEmail?: string;
   serverUrl?: string;
   personalAccessToken?: string;
-  tokenExpiry?: Date;
-  scopes?: string[];
 }
 
 export interface IUser extends Document {
@@ -51,6 +57,26 @@ const RedditAuthSchema = new Schema<IRedditAuth>({
 }, { _id: false });
 
 const JiraAuthSchema = new Schema<IJiraAuth>({
+  // OAuth 2.0 (3LO) fields
+  accessToken: {
+    type: String,
+    select: false, // Don't include by default for security
+  },
+  refreshToken: {
+    type: String,
+    select: false, // Don't include by default for security
+  },
+  tokenExpiry: {
+    type: Date,
+  },
+  scopes: [{
+    type: String,
+  }],
+  cloudId: {
+    type: String,
+  },
+
+  // Legacy fields (for backwards compatibility)
   cloudSite: {
     type: String,
   },
@@ -68,12 +94,6 @@ const JiraAuthSchema = new Schema<IJiraAuth>({
     type: String,
     select: false,
   },
-  tokenExpiry: {
-    type: Date,
-  },
-  scopes: [{
-    type: String,
-  }],
 }, { _id: false });
 
 const UserSchema = new Schema<IUser>({
@@ -103,7 +123,6 @@ const UserSchema = new Schema<IUser>({
     type: String,
     required: [true, 'OAuth sub is required'],
     unique: true,
-    index: true,
   },
   dateOfBirth: {
     type: Date,
@@ -126,10 +145,6 @@ const UserSchema = new Schema<IUser>({
   timestamps: true,
   collection: 'users',
 });
-
-UserSchema.index({ email: 1 });
-UserSchema.index({ sub: 1 });
-
 UserSchema.methods = {
   isRedditTokenExpired(): boolean {
     if (!this.redditAuth?.tokenExpiry) return true;

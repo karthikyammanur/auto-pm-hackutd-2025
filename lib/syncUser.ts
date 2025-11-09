@@ -22,6 +22,11 @@ export async function syncUserToDatabase(): Promise<{
 
     const auth0User = session.user;
 
+    // Ensure email is present
+    if (!auth0User.email) {
+      throw new Error('User email not found in Auth0 session');
+    }
+
     // Extract user data from Auth0 session
     const userData = {
       sub: auth0User.sub,

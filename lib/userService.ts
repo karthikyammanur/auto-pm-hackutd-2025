@@ -10,9 +10,6 @@ interface CreateUserData {
 }
 
 class UserService {
-  /**
-   * Find user by Auth0 sub (unique identifier)
-   */
   static async findBySub(sub: string): Promise<IUser | null> {
     try {
       await connectDB();
@@ -24,9 +21,6 @@ class UserService {
     }
   }
 
-  /**
-   * Find user by email
-   */
   static async findByEmail(email: string): Promise<IUser | null> {
     try {
       await connectDB();
@@ -38,10 +32,6 @@ class UserService {
     }
   }
 
-  /**
-   * Create a new user in the database
-   * Only call this if user doesn't exist
-   */
   static async createUser(userData: CreateUserData): Promise<IUser> {
     try {
       await connectDB();
@@ -55,7 +45,7 @@ class UserService {
       });
 
       await newUser.save();
-      console.log(`✅ New user created: ${userData.email}`);
+      console.log(`New user created: ${userData.email}`);
       return newUser;
     } catch (error) {
       console.error('Error creating user:', error);
@@ -63,10 +53,6 @@ class UserService {
     }
   }
 
-  /**
-   * Find user by sub, or create if doesn't exist
-   * This is the main function to use after Auth0 authentication
-   */
   static async findOrCreateUser(userData: CreateUserData): Promise<{
     user: IUser;
     isNewUser: boolean;
@@ -75,14 +61,13 @@ class UserService {
       await connectDB();
 
       // First try to find by sub (most reliable identifier)
-      let user = await User.findOne({ sub: userData.sub });
+      let user: IUser | null = await User.findOne({ sub: userData.sub });
 
       if (user) {
-        console.log(`✅ Existing user found: ${user.email}`);
+        console.log(`Existing user found: ${user.email}`);
         return { user, isNewUser: false };
       }
 
-      // Check if user exists with same email (edge case: user signed up before)
       user = await User.findOne({ email: userData.email.toLowerCase() });
 
       if (user) {
@@ -90,14 +75,14 @@ class UserService {
         if (user.sub !== userData.sub) {
           user.sub = userData.sub;
           await user.save();
-          console.log(`✅ Updated existing user sub: ${user.email}`);
+          console.log(`Updated existing user sub: ${user.email}`);
         }
         return { user, isNewUser: false };
       }
 
       // User doesn't exist, create new user
-      user = await this.createUser(userData);
-      return { user, isNewUser: true };
+      const newUser = await this.createUser(userData);
+      return { user: newUser, isNewUser: true };
     } catch (error) {
       console.error('Error in findOrCreateUser:', error);
       throw error;
@@ -135,7 +120,7 @@ class UserService {
       );
 
       if (user) {
-        console.log(`✅ Updated Reddit auth for user: ${user.email}`);
+        console.log(`Updated Reddit auth for user: ${user.email}`);
       }
 
       return user;
@@ -145,19 +130,19 @@ class UserService {
     }
   }
 
-  /**
-   * Update user's Jira authentication tokens
-   */
   static async updateJiraAuth(
     sub: string,
     jiraAuth: {
+      accessToken?: string;
+      refreshToken?: string;
+      tokenExpiry?: Date;
+      scopes?: string[];
+      cloudId?: string;
       cloudSite?: string;
       apiToken?: string;
       userEmail?: string;
       serverUrl?: string;
       personalAccessToken?: string;
-      tokenExpiry?: Date;
-      scopes?: string[];
     }
   ): Promise<IUser | null> {
     try {
@@ -170,7 +155,7 @@ class UserService {
             jiraAuth,
           },
         },
-        { new: true } // Return updated document
+        { new: true }
       );
 
       if (user) {
@@ -184,16 +169,12 @@ class UserService {
     }
   }
 
-  /**
-   * Get user with sensitive fields (tokens) included
-   * Use this when you need to access API tokens
-   */
   static async getUserWithTokens(sub: string): Promise<IUser | null> {
     try {
       await connectDB();
 
       const user = await User.findOne({ sub })
-        .select('+redditAuth.accessToken +redditAuth.refreshToken +jiraAuth.apiToken +jiraAuth.personalAccessToken');
+        .select('+redditAuth.accessToken +redditAuth.refreshToken +jiraAuth.accessToken +jiraAuth.refreshToken +jiraAuth.apiToken +jiraAuth.personalAccessToken');
 
       return user;
     } catch (error) {
