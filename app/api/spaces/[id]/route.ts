@@ -117,13 +117,42 @@ export async function PUT(
       'wireframeAgent',
     ];
 
-    allowedUpdates.forEach((field) => {
-      if (body[field] !== undefined) {
-        (space as any)[field] = body[field];
+    console.log(`[PUT /api/spaces/${id}] Request body:`, JSON.stringify(body, null, 2));
+    
+    // Handle nested field updates (e.g., 'ideaAgent.selectedSolution')
+    Object.keys(body).forEach((key) => {
+      if (key.includes('.')) {
+        // Handle dot notation for nested fields
+        const [parent, child] = key.split('.');
+        console.log(`[PUT /api/spaces/${id}] Processing nested field - parent: ${parent}, child: ${child}, value:`, body[key]);
+        
+        if (allowedUpdates.includes(parent)) {
+          if (!(space as any)[parent]) {
+            console.log(`[PUT /api/spaces/${id}] Creating new ${parent} object`);
+            (space as any)[parent] = {};
+          }
+          (space as any)[parent][child] = body[key];
+          space.markModified(parent);
+          console.log(`[PUT /api/spaces/${id}] Set ${parent}.${child}, marked as modified`);
+          console.log(`[PUT /api/spaces/${id}] Current ${parent} value:`, (space as any)[parent]);
+        }
+      } else if (allowedUpdates.includes(key)) {
+        console.log(`[PUT /api/spaces/${id}] Setting top-level field ${key}:`, body[key]);
+        (space as any)[key] = body[key];
       }
     });
 
-    await space.save();
+    console.log(`[PUT /api/spaces/${id}] About to save space...`);
+    console.log(`[PUT /api/spaces/${id}] ideaAgent before save:`, JSON.stringify(space.ideaAgent, null, 2));
+    
+    try {
+      await space.save();
+      console.log(`[PUT /api/spaces/${id}] Successfully saved space`);
+      console.log(`[PUT /api/spaces/${id}] ideaAgent after save:`, JSON.stringify(space.ideaAgent, null, 2));
+    } catch (saveError) {
+      console.error(`[PUT /api/spaces/${id}] Save error:`, saveError);
+      throw saveError;
+    }
 
     return NextResponse.json(space);
   } catch (error) {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import GoogleIntegrationButton from "./GoogleIntegrationButton";
 import JiraIntegrationButton from "./JiraIntegrationButton";
 import RedditIntegrationButton from "./RedditIntegrationButton";
+import ProfileDropdown from "./ProfileDropdown";
 
 interface User {
   name?: string;
@@ -44,20 +45,7 @@ export default function SettingsContent({
           </div>
 
           {/* Right section */}
-          <div className="flex items-center gap-3">
-            {user.picture && (
-              <img
-                src={user.picture}
-                alt={user.name || 'User'}
-                className="w-10 h-10 rounded-full border-2"
-                style={{ borderColor: '#E5E5E5' }}
-              />
-            )}
-            <div className="text-right hidden md:block">
-              <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>{user.name}</p>
-              <p className="text-xs" style={{ color: '#6B6B6B' }}>{user.email}</p>
-            </div>
-          </div>
+          <ProfileDropdown user={user} />
         </div>
       </header>
 
@@ -80,75 +68,9 @@ export default function SettingsContent({
         </div>
 
         {/* Settings Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Section - Takes 1 column */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl p-8 shadow-sm" style={{ border: '1px solid #E5E5E5' }}>
-              <h2 className="text-xl font-semibold mb-6" style={{ color: '#1A1A1A' }}>Profile</h2>
-              
-              <div className="flex flex-col items-center mb-6">
-                {user.picture ? (
-                  <img
-                    src={user.picture}
-                    alt={user.name || 'User'}
-                    className="w-20 h-20 rounded-full mb-4 border-2"
-                    style={{ borderColor: '#E5E5E5' }}
-                  />
-                ) : (
-                  <div 
-                    className="w-20 h-20 rounded-full mb-4 flex items-center justify-center text-2xl font-bold text-white"
-                    style={{ backgroundColor: '#9B6B7A' }}
-                  >
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                )}
-                <h3 className="text-lg font-semibold mb-1" style={{ color: '#1A1A1A' }}>{user.name}</h3>
-                <p className="text-sm" style={{ color: '#6B6B6B' }}>{user.email}</p>
-              </div>
-
-              <div className="space-y-4 mb-6">
-                {user.nickname && (
-                  <div>
-                    <label className="text-xs font-medium block mb-1" style={{ color: '#6B6B6B' }}>Nickname</label>
-                    <div className="px-4 py-2.5 rounded-lg text-sm" style={{ backgroundColor: '#FAFAFA', color: '#1A1A1A' }}>
-                      {user.nickname}
-                    </div>
-                  </div>
-                )}
-                {user.sub && (
-                  <div>
-                    <label className="text-xs font-medium block mb-1" style={{ color: '#6B6B6B' }}>User ID</label>
-                    <div className="px-4 py-2.5 rounded-lg text-xs font-mono break-all" style={{ backgroundColor: '#FAFAFA', color: '#6B6B6B' }}>
-                      {user.sub}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <a
-                href="/auth/logout"
-                className="w-full block text-center px-4 py-2.5 rounded-lg font-semibold text-sm border transition-all duration-200"
-                style={{
-                  backgroundColor: 'transparent',
-                  borderColor: '#E5E5E5',
-                  color: '#EF4444',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#FEE2E2';
-                  e.currentTarget.style.borderColor = '#EF4444';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.borderColor = '#E5E5E5';
-                }}
-              >
-                Sign Out
-              </a>
-            </div>
-          </div>
-
-          {/* Integrations Section - Takes 2 columns */}
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 gap-6">
+          {/* Integrations Section - Full Width */}
+          <div>
             <div className="bg-white rounded-xl p-8 shadow-sm" style={{ border: '1px solid #E5E5E5' }}>
               <div className="mb-6">
                 <h2 className="text-xl font-semibold mb-2" style={{ color: '#1A1A1A' }}>Integrations</h2>

@@ -3,8 +3,16 @@ import { redirect } from "next/navigation";
 import connectDB from "@/lib/mongodb";
 import Space from "@/models/Space";
 import Link from "next/link";
+import SpacePageHeader from "@/components/SpacePageHeader";
+import SpaceAgentContent from "@/components/SpaceAgentContent";
 
-export default async function SpacePage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+export default async function SpacePage({ 
+  params,
+  searchParams 
+}: { 
+  params: Promise<{ id: string }> | { id: string };
+  searchParams: Promise<{ step?: string }> | { step?: string };
+}) {
   const session = await auth0.getSession();
   const user = session?.user;
 
@@ -14,6 +22,9 @@ export default async function SpacePage({ params }: { params: Promise<{ id: stri
 
   const resolvedParams = await Promise.resolve(params);
   const { id } = resolvedParams;
+  
+  const resolvedSearchParams = await Promise.resolve(searchParams);
+  const viewStep = resolvedSearchParams.step ? parseInt(resolvedSearchParams.step) : null;
 
   let space: any = null;
   try {
@@ -27,12 +38,31 @@ export default async function SpacePage({ params }: { params: Promise<{ id: stri
       redirect("/dashboard");
     }
 
+    // Serialize the space data
     space = {
       ...spaceData,
       _id: spaceData._id.toString(),
       createdAt: spaceData.createdAt.toISOString(),
       updatedAt: spaceData.updatedAt.toISOString(),
+      // Ensure nested objects are properly serialized
+      ideaAgent: spaceData.ideaAgent ? {
+        title: spaceData.ideaAgent.title,
+        summary: spaceData.ideaAgent.summary,
+        solutions: spaceData.ideaAgent.solutions || [],
+        sources: spaceData.ideaAgent.sources || [],
+        selectedSolution: spaceData.ideaAgent.selectedSolution,
+        generatedAt: spaceData.ideaAgent.generatedAt?.toISOString(),
+      } : undefined,
+      storyAgent: spaceData.storyAgent ? {
+        ...spaceData.storyAgent,
+        generatedAt: spaceData.storyAgent.generatedAt?.toISOString(),
+      } : undefined,
     };
+    
+    console.log('[Space Page] Loaded space from MongoDB:');
+    console.log('[Space Page] - ideaAgent exists:', !!spaceData.ideaAgent);
+    console.log('[Space Page] - selectedSolution:', spaceData.ideaAgent?.selectedSolution);
+    console.log('[Space Page] - solutions count:', spaceData.ideaAgent?.solutions?.length);
   } catch (error) {
     console.error('Failed to fetch space:', error);
     redirect("/dashboard");
@@ -98,39 +128,7 @@ export default async function SpacePage({ params }: { params: Promise<{ id: stri
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F5F5F7' }}>
       {/* Top Navigation Bar */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/dashboard"
-              className="flex items-center gap-2 text-sm transition-colors hover:opacity-80"
-              style={{ color: '#6B6B6B' }}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to Dashboard
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{space.name}</p>
-              <p className="text-xs" style={{ color: '#6B6B6B' }}>
-                Step {space.currentStep} of {agentSteps.length}
-              </p>
-            </div>
-            {user.picture && (
-              <img
-                src={user.picture}
-                alt={user.name || 'User'}
-                className="w-10 h-10 rounded-full border-2"
-                style={{ borderColor: '#E5E5E5' }}
-              />
-            )}
-          </div>
-        </div>
-      </header>
+      <SpacePageHeader user={user} space={space} totalSteps={agentSteps.length} />
 
       {/* Main Content - Two Panel Layout */}
       <div className="flex max-w-[1600px] mx-auto">
@@ -182,16 +180,20 @@ export default async function SpacePage({ params }: { params: Promise<{ id: stri
             <div className="space-y-2">
               {agentSteps.map((step) => {
                 const isCompleted = step.number < space.currentStep;
-                const isCurrent = step.number === space.currentStep;
                 const isPending = step.number > space.currentStep;
+                const isClickable = isCompleted || step.number === space.currentStep;
+                
+                // Determine if this is the active viewed step
+                const isActiveView = viewStep ? step.number === viewStep : step.number === space.currentStep;
 
                 return (
-                  <button
+                  <Link
                     key={step.number}
-                    className="w-full text-left px-3 py-2 rounded transition-all"
+                    href={isClickable ? `/space/${space._id}?step=${step.number}` : '#'}
+                    className={`block w-full text-left px-3 py-2 rounded transition-all ${isClickable ? 'cursor-pointer hover:shadow-sm' : 'cursor-not-allowed'}`}
                     style={{
-                      backgroundColor: isCurrent ? 'rgba(155, 107, 122, 0.08)' : isPending ? '#FAFAFA' : '#F9FAFB',
-                      border: `1px solid ${isCurrent ? '#9B6B7A' : '#E5E5E5'}`,
+                      backgroundColor: isActiveView ? 'rgba(155, 107, 122, 0.08)' : isPending ? '#FAFAFA' : '#F9FAFB',
+                      border: `1px solid ${isActiveView ? '#9B6B7A' : '#E5E5E5'}`,
                     }}
                   >
                     <div className="flex items-center gap-2.5">
@@ -199,11 +201,11 @@ export default async function SpacePage({ params }: { params: Promise<{ id: stri
                       <div
                         className="w-7 h-7 rounded flex items-center justify-center shrink-0 transition-all"
                         style={{
-                          backgroundColor: isCompleted ? '#10B981' : isCurrent ? '#9B6B7A' : '#F3F4F6',
-                          color: isCompleted || isCurrent ? '#FFFFFF' : '#9CA3AF',
+                          backgroundColor: isCompleted ? '#10B981' : isActiveView ? '#9B6B7A' : '#F3F4F6',
+                          color: isCompleted || isActiveView ? '#FFFFFF' : '#9CA3AF',
                         }}
                       >
-                        {isCompleted ? (
+                        {isCompleted && !isActiveView ? (
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
@@ -224,7 +226,7 @@ export default async function SpacePage({ params }: { params: Promise<{ id: stri
                         </p>
                       </div>
                     </div>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
@@ -233,46 +235,7 @@ export default async function SpacePage({ params }: { params: Promise<{ id: stri
 
         {/* Right Panel - Agent Content */}
         <main className="flex-1 p-4">
-          {/* Current Agent Content */}
-          <div className="bg-white rounded-lg p-8 shadow-sm" style={{ border: '1px solid #E5E5E5' }}>
-            <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(155, 107, 122, 0.08)' }}>
-                {agentSteps[space.currentStep - 1].icon && (
-                  <div style={{ color: '#9B6B7A' }} className="scale-150">
-                    {agentSteps[space.currentStep - 1].icon}
-                  </div>
-                )}
-              </div>
-              <h2 className="text-2xl font-semibold mb-6" style={{ color: '#1A1A1A' }}>
-                {agentSteps[space.currentStep - 1].name}
-              </h2>
-
-              {/* Coming Soon Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6" style={{ backgroundColor: 'rgba(155, 107, 122, 0.08)', color: '#9B6B7A' }}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Coming Soon
-              </div>
-
-              <p className="text-sm max-w-md mx-auto" style={{ color: '#9CA3AF' }}>
-                The AI-powered agent workflow is currently under development. This feature will be available soon!
-              </p>
-            </div>
-          </div>
-
-          {/* Agent Output Placeholder */}
-          <div className="mt-6 bg-white rounded-lg p-6 shadow-sm" style={{ border: '1px solid #E5E5E5' }}>
-            <h3 className="text-sm font-semibold uppercase tracking-wide mb-4" style={{ color: '#6B6B6B' }}>
-              Agent Output
-            </h3>
-            <div className="space-y-3">
-              <div className="h-4 rounded" style={{ backgroundColor: '#F3F4F6', width: '90%' }} />
-              <div className="h-4 rounded" style={{ backgroundColor: '#F3F4F6', width: '75%' }} />
-              <div className="h-4 rounded" style={{ backgroundColor: '#F3F4F6', width: '85%' }} />
-              <div className="h-4 rounded" style={{ backgroundColor: '#F3F4F6', width: '60%' }} />
-            </div>
-          </div>
+          <SpaceAgentContent space={space} agentSteps={agentSteps} viewStep={viewStep} />
         </main>
       </div>
     </div>

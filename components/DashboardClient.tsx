@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import CreateSpaceModal from "./CreateSpaceModal";
+import ProfileDropdown from "./ProfileDropdown";
 
 interface Space {
   _id: string;
@@ -48,30 +49,7 @@ export default function DashboardClient({ user, initialSpaces }: DashboardClient
 
           {/* Right section */}
           <div className="flex items-center gap-4">
-            <Link 
-              href="/settings"
-              className="p-2 rounded-lg hover:bg-gray-50 transition-colors"
-              title="Settings"
-            >
-              <svg className="w-5 h-5" style={{ color: '#6B6B6B' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </Link>
-            <div className="flex items-center gap-3">
-              {user.picture && (
-                <img
-                  src={user.picture}
-                  alt={user.name || 'User'}
-                  className="w-10 h-10 rounded-full border-2"
-                  style={{ borderColor: '#E5E5E5' }}
-                />
-              )}
-              <div className="text-right hidden md:block">
-                <p className="text-sm font-semibold" style={{ color: '#1A1A1A' }}>{user.name}</p>
-                <p className="text-xs" style={{ color: '#6B6B6B' }}>{user.email}</p>
-              </div>
-            </div>
+            <ProfileDropdown user={user} />
           </div>
         </div>
       </header>

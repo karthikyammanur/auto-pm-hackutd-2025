@@ -9,6 +9,7 @@ interface IIdeaAgentData {
   summary?: string;
   solutions?: string[];  // Array of solution strings
   sources?: string[];    // Array of URLs from research
+  selectedSolution?: string;  // User's selected solution
   generatedAt?: Date;
 }
 
@@ -114,6 +115,7 @@ const IdeaAgentDataSchema = new Schema<IIdeaAgentData>({
   summary: String,
   solutions: [String],
   sources: [String],
+  selectedSolution: String,
   generatedAt: Date,
 }, { _id: false });
 

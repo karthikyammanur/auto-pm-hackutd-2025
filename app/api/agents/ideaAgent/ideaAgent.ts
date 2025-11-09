@@ -113,8 +113,11 @@ async function analyzeAndStructure(state: typeof StateAnnotation.State) {
              - The core problem identified from the user's query
              - Key insights from the internet research
              - The overall solution approach
-          3. An array of 3-5 specific, actionable solutions
+          3. An array of 3-5 specific, actionable solutions (MUST be an array of separate solution strings, NOT a single string)
           4. An array of sources used during research (already extracted, you will receive them)
+
+          IMPORTANT: The solutions field MUST be an array like ["Solution 1", "Solution 2", "Solution 3"]
+          NOT a single long string. Each solution should be a separate, concise item.
 
           Be specific and practical. Base your solutions on the research findings.
         `,
@@ -129,14 +132,32 @@ async function analyzeAndStructure(state: typeof StateAnnotation.State) {
 
           Sources Found: ${state.sources.length > 0 ? state.sources.join(", ") : "General knowledge base"}
 
-          Please provide a structured analysis with title, summary, solutions array, and sources array.
-          Use the sources found above for the sources field.
+          Please provide a structured analysis with:
+          - title: string
+          - summary: string
+          - solutions: array of 3-5 separate solution strings
+          - sources: array of source URLs
+
+          Each solution must be a separate item in the array, not a single long description.
         `,
       },
     ]);
 
-    console.log("4. Analysis completed:", analysis);
-    if (!analysis.sources || analysis.sources.length === 0) {
+    console.log("4. Analysis completed:", JSON.stringify(analysis, null, 2));
+    
+    // Ensure solutions is always an array
+    if (!Array.isArray(analysis.solutions)) {
+      console.warn("Solutions is not an array, converting:", analysis.solutions);
+      if (typeof analysis.solutions === 'string') {
+        // If it's a single string, split it into sentences or bullet points
+        analysis.solutions = [analysis.solutions];
+      } else {
+        analysis.solutions = ["Please review the summary for detailed solutions"];
+      }
+    }
+
+    // Ensure sources is always an array
+    if (!Array.isArray(analysis.sources) || analysis.sources.length === 0) {
       analysis.sources = state.sources.length > 0 ? state.sources : ["General knowledge and research principles"];
     }
 
