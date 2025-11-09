@@ -335,18 +335,51 @@ export interface ResearchResult {
 // ============================================================================
 
 /**
- * Final output from the Research Module
+ * Simplified trend for output
+ */
+export interface SimplifiedTrend {
+  trend: string;
+  summary: string;
+  impact: 'positive' | 'neutral' | 'negative';
+}
+
+/**
+ * Simplified competitor for output
+ */
+export interface SimplifiedCompetitor {
+  name: string;
+  description: string;
+  strengths: string;
+  weaknesses: string;
+}
+
+/**
+ * Competitive analysis section
+ */
+export interface CompetitiveAnalysis {
+  competitors: SimplifiedCompetitor[];
+  market_position: string;
+}
+
+/**
+ * Final output from the Research Module (Clean, simplified version)
  * This is what the subgraph returns to the caller
  */
 export interface ResearchModuleOutput {
   /** Solution ID (same as input) */
   solution_id: string;
   
-  /** 3-8 sentences summarizing the research in plain English for the PM */
+  /** Comprehensive summary for PM/chatbot */
   summary_for_pm: string;
   
-  /** Structured research result with all details */
-  research_result: ResearchResult;
+  /** Customer voice - single paragraph summary */
+  customer_voice: string;
+  
+  /** Industry trends - 2-3 liner summaries */
+  industry_trends: SimplifiedTrend[];
+  
+  /** Competitive analysis with market position */
+  competitive_analysis: CompetitiveAnalysis;
 }
 
 // ============================================================================

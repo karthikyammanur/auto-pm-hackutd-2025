@@ -31,19 +31,20 @@ export const INTENSITY_WEIGHTS = {
 
 export const FETCH_LIMITS = {
   // Reddit
-  redditPostsPerQuery: 20,
-  redditMaxQueries: 7,
+  redditPostsPerQuery: 10, // Reduced from 20
+  redditMaxQueries: 5, // Reduced from 7
   redditMinQueries: 3,
+  enableLLMRelevanceFilter: false, // Set to true for higher quality, false for speed
   
   // Competitors
   competitorSearchResults: 10,
   minCompetitors: 2,
-  maxCompetitors: 5,
+  maxCompetitors: 3, // Reduced from 5
   
   // Industry Trends
   trendSearchResults: 10,
   minTrends: 3,
-  maxTrends: 7,
+  maxTrends: 5, // Reduced from 7
 } as const;
 
 // ============================================================================
@@ -112,7 +113,7 @@ export const WEB_SEARCH_CONFIG = {
 
 export const GENAI_CONFIG = {
   apiKey: process.env.GOOGLE_API_KEY || '',
-  model: 'gemini-1.5-flash', // Fast model for classification tasks
+  model: 'gemini-2.5-flash-lite', // Stable, fast model
   temperature: 0.3, // Lower temperature for more consistent classification
   maxOutputTokens: 2048,
 } as const;
@@ -163,26 +164,86 @@ Return your response in JSON format:
 }`,
 
   // Industry trend analysis
-  analyzeTrend: `Analyze the following trend/news snippet in the context of this solution:
+  analyzeTrend: `You are analyzing an industry trend in the context of a specific solution.
 
-Solution Context: {solutionContext}
-Trend/News: {trendInfo}
+Solution Context:
+{solutionContext}
 
-Determine:
-1. Direction (one of: growing, stable, declining)
-2. Stance relative to the solution (one of: supportive, neutral, risky)
-   - supportive: makes the solution more attractive/necessary
-   - neutral: neither helps nor hinders
-   - risky: creates risk, friction, or regulatory concerns
-3. Implication for the solution (one sentence)
+Trend/News:
+{trendInfo}
+
+Task: Analyze this trend and determine:
+1. Name: A short, descriptive name for this trend (5-10 words)
+2. Direction: Whether this trend is "growing", "stable", or "declining"
+3. Stance: How this trend affects the solution:
+   - "supportive" = makes the solution more valuable/necessary
+   - "neutral" = neither helps nor hinders significantly
+   - "risky" = creates challenges, regulations, or friction
+4. Implication: One clear sentence explaining what this means for the solution
+
+Return ONLY valid JSON (no markdown, no extra text):
+{
+  "name": "Short trend name",
+  "direction": "growing",
+  "stance": "supportive",
+  "implication": "Clear one-sentence implication for the solution.",
+  "reasoning": "Brief explanation"
+}`,
+
+  // Competitor name extraction from search results
+  extractCompetitorNames: `You are analyzing web search results to identify competitors for a specific solution.
+
+Solution Context:
+{solutionContext}
+
+Web Search Results:
+{searchResults}
+
+Task: Extract 2-5 real company or product names that compete in this space.
+
+Guidelines:
+1. Look for companies/products that serve the same target users with similar solutions
+2. Include both direct competitors and adjacent solutions in the same domain
+3. Extract actual company/product names from the search results (e.g., "IBM Watson Health", "PathAI", "Tempus")
+4. Do NOT include:
+   - Generic payment processors (Stripe, PayPal, Square) UNLESS the solution is about payment processing
+   - Generic terms like "software", "platform", "service", "AI", "technology"
+   - The solution's own name
+5. If the search results contain relevant competitors, extract them even if they're not perfect matches
+6. Prioritize companies explicitly mentioned in multiple search results
+
+Return ONLY valid JSON (no markdown, no extra text):
+{
+  "competitors": ["Company1", "Company2"],
+  "reasoning": "brief explanation"
+}`,
+
+  // Reddit post relevance filtering (quick yes/no for batch processing)
+  filterRedditRelevance: `Determine if the following Reddit post is relevant to the problem area.
+
+Problem Area: {problemArea}
+Target Users: {targetUsers}
+
+Reddit Post:
+Title: {title}
+Body: {body}
+Subreddit: r/{subreddit}
+
+A post is RELEVANT if it:
+- Discusses actual problems, pain points, or frustrations in this domain
+- Mentions needs, feature requests, or alternatives related to this area
+- Shows user experiences with similar solutions
+
+A post is NOT RELEVANT if it:
+- Only mentions keywords tangentially (e.g., mentions "payment" but is about video game purchases)
+- Is about entertainment, personal relationships, politics, or unrelated topics
+- Is a meme, joke, or off-topic discussion
+
+Be strict - when in doubt, mark as NOT relevant.
 
 Return your response in JSON format:
 {
-  "name": "short trend name",
-  "direction": "growing" | "stable" | "declining",
-  "stance": "supportive" | "neutral" | "risky",
-  "implication": "one sentence implication",
-  "reasoning": "brief explanation"
+  "relevant": true | false
 }`,
 } as const;
 
