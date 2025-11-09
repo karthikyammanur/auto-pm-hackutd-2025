@@ -52,7 +52,7 @@ export default function SettingsContent({
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[1400px] mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Page Header */}
         <div className="mb-10">
           <Link
