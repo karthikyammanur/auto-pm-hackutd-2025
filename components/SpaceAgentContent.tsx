@@ -4,6 +4,8 @@ import { useState } from "react";
 import IdeaAgentView from "./IdeaAgentView";
 import StoryAgentView from "./StoryAgentView";
 import EmailAgentView from "./EmailAgentView";
+import RiceAgentView from "./RiceAgentView";
+import OkrAgentView from "./OkrAgentView";
 
 interface AgentStep {
   number: number;
@@ -20,6 +22,8 @@ interface Space {
   ideaAgent?: any;
   storyAgent?: any;
   emailAgent?: any;
+  riceAgent?: any;
+  okrAgent?: any;
   createdAt: string;
   updatedAt: string;
 }
@@ -78,6 +82,32 @@ export default function SpaceAgentContent({ space: initialSpace, agentSteps, vie
             spaceId={space._id}
             selectedSolution={emailSelectedSolution || null}
             emailAgentData={(space as any).emailAgent || null}
+            onComplete={handleAgentComplete}
+            isViewingPastStep={viewStep !== null && viewStep < space.currentStep}
+          />
+        );
+      
+      case 4:
+        const riceSelectedSolution = (space.ideaAgent as any)?.selectedSolution;
+        console.log('[SpaceAgentContent] Step 4 - Selected solution:', riceSelectedSolution);
+        
+        return (
+          <RiceAgentView
+            spaceId={space._id}
+            selectedSolution={riceSelectedSolution || null}
+            riceAgentData={(space as any).riceAgent || null}
+            onComplete={handleAgentComplete}
+            isViewingPastStep={viewStep !== null && viewStep < space.currentStep}
+          />
+        );
+      
+      case 5:
+        console.log('[SpaceAgentContent] Step 5 - OKR Planning');
+        
+        return (
+          <OkrAgentView
+            spaceId={space._id}
+            okrAgentData={(space as any).okrAgent || null}
             onComplete={handleAgentComplete}
             isViewingPastStep={viewStep !== null && viewStep < space.currentStep}
           />

@@ -58,7 +58,8 @@ interface IFeature {
 }
 
 interface IRICEAgentData {
-  sortedFeatures?: IFeature[];
+  features?: IFeature[];  // Original features generated from solution
+  sortedFeatures?: IFeature[];  // Features sorted by RICE score
   analysis?: string;  // AI-generated analysis text
   generatedAt?: Date;
 }
@@ -70,7 +71,9 @@ interface IRICEAgentData {
 // Returns: Markdown string with OKR analysis/summary
 interface IOKRAgentData {
   summary?: string;       // Markdown formatted OKR summary from PDF
-  analysis?: string;      // Markdown formatted OKR analysis
+  analysis?: string;      // Markdown formatted OKR analysis (Q&A response)
+  question?: string;      // User's question (if in Q&A mode)
+  fileName?: string;      // Name of uploaded PDF file
   generatedAt?: Date;
 }
 
@@ -151,6 +154,7 @@ const FeatureSchema = new Schema<IFeature>({
 }, { _id: false });
 
 const RICEAgentDataSchema = new Schema<IRICEAgentData>({
+  features: [FeatureSchema],
   sortedFeatures: [FeatureSchema],
   analysis: String,
   generatedAt: Date,
@@ -159,6 +163,8 @@ const RICEAgentDataSchema = new Schema<IRICEAgentData>({
 const OKRAgentDataSchema = new Schema<IOKRAgentData>({
   summary: String,
   analysis: String,
+  question: String,
+  fileName: String,
   generatedAt: Date,
 }, { _id: false });
 

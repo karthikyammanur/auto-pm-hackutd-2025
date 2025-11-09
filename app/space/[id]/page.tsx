@@ -61,6 +61,14 @@ export default async function SpacePage({
         ...spaceData.emailAgent,
         generatedAt: spaceData.emailAgent.generatedAt?.toISOString(),
       } : undefined,
+      riceAgent: spaceData.riceAgent ? {
+        ...spaceData.riceAgent,
+        generatedAt: spaceData.riceAgent.generatedAt?.toISOString(),
+      } : undefined,
+      okrAgent: spaceData.okrAgent ? {
+        ...spaceData.okrAgent,
+        generatedAt: spaceData.okrAgent.generatedAt?.toISOString(),
+      } : undefined,
     };
     
     console.log('[Space Page] Loaded space from MongoDB:');
