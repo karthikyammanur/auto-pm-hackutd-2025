@@ -120,7 +120,7 @@ class UserService {
       );
 
       if (user) {
-        console.log(`Updated Reddit auth for user: ${user.email}`);
+        console.log(`✅ Updated Reddit auth for user: ${user.email}`);
       }
 
       return user;

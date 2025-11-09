@@ -15,13 +15,6 @@ interface IJiraAuth {
   tokenExpiry?: Date;
   scopes?: string[];
   cloudId?: string; // Atlassian cloud ID for API requests
-
-  // Legacy fields (for backwards compatibility)
-  cloudSite?: string;
-  apiToken?: string;
-  userEmail?: string;
-  serverUrl?: string;
-  personalAccessToken?: string;
 }
 
 export interface IUser extends Document {
@@ -36,6 +29,10 @@ export interface IUser extends Document {
 
   createdAt: Date;
   updatedAt: Date;
+
+  // Instance methods
+  isRedditTokenExpired(): boolean;
+  isJiraTokenExpired(): boolean;
 }
 
 const RedditAuthSchema = new Schema<IRedditAuth>({
@@ -74,26 +71,7 @@ const JiraAuthSchema = new Schema<IJiraAuth>({
   }],
   cloudId: {
     type: String,
-  },
-
-  // Legacy fields (for backwards compatibility)
-  cloudSite: {
-    type: String,
-  },
-  apiToken: {
-    type: String,
-    select: false,
-  },
-  userEmail: {
-    type: String,
-  },
-  serverUrl: {
-    type: String,
-  },
-  personalAccessToken: {
-    type: String,
-    select: false,
-  },
+  }
 }, { _id: false });
 
 const UserSchema = new Schema<IUser>({
