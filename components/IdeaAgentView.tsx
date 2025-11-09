@@ -116,6 +116,10 @@ export default function IdeaAgentView({ spaceId, problemStatement, ideaAgentData
             
             const updatedSpace = await response.json();
             console.log('[IdeaAgentView] Selected solution saved to MongoDB:', updatedSpace.ideaAgent?.selectedSolution);
+            
+            // Reload the page to refresh the space data so other agents can see the selection
+            console.log('[IdeaAgentView] Reloading page to refresh space data...');
+            window.location.reload();
         } catch (err) {
             console.error('Error saving selected solution:', err);
         }
