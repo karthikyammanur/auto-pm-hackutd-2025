@@ -1,5 +1,7 @@
 # AutoPM — AI-Powered Product Management Copilot
 
+[![Watch the demo](https://img.youtube.com/vi/sNpusFMyFoI/maxresdefault.jpg)](https://www.youtube.com/watch?v=sNpusFMyFoI)
+
 ## Inspiration
 
 PMs juggle ideation, user stories, prioritization, OKR alignment, wireframes, emails, and Jira—all under time pressure. We built AutoPM to offload the busywork to specialized AI agents so PMs can focus on strategy and decisions. 
@@ -49,7 +51,6 @@ Plus a **context-aware AI assistant** that knows your project history and a **ma
 * Progressive disclosure and visual feedback reduce cognitive load.
 * Balancing hackathon speed with production-grade error handling. 
 
-
 ## Tech Stack
 
-LangGraph • LangChain • Google Gemini • Tavily •Next.js • React/TypeScript • Tailwind • MongoDB • Auth0 •  Gmail API • Jira Cloud • Zod. 
+LangGraph • LangChain • Google Gemini • Tavily • Next.js • React/TypeScript • Tailwind • MongoDB • Auth0 • Gmail API • Jira Cloud • Zod.
