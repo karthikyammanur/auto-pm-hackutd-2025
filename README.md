@@ -1,4 +1,4 @@
-# AutoPM — AI-Powered Product Management Copilot
+# AutoPM — AI-Powered Product Management Copilot (2nd Place @ HackUTD - PNC track)
 
 [![Watch the demo](https://img.youtube.com/vi/sNpusFMyFoI/maxresdefault.jpg)](https://www.youtube.com/watch?v=sNpusFMyFoI)
 
